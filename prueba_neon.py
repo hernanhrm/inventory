@@ -6,7 +6,7 @@ try:
     conn = psycopg2.connect(DATABASE_URL)
     cur = conn.cursor()
 
-    # 1. Insertar un producto de prueba
+    # 1. Insertar un producto de prueba 
     # Usamos %s por seguridad (evita ataques de inyección SQL)
     nombre_prod = "Laptop Gamer"
     precio_prod = 1200.50
@@ -16,7 +16,7 @@ try:
         INSERT INTO productos (nombre, precio, cantidad) 
         VALUES (%s, %s, %s);
     """, (nombre_prod, precio_prod, cantidad_prod))
-
+        
     # ¡IMPORTANTE! En operaciones de escritura (INSERT, UPDATE, DELETE), 
     # siempre hay que hacer commit para que los cambios se guarden.
     conn.commit()
