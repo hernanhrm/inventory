@@ -13,3 +13,12 @@ class Category(db.Model):
 
     def __repr__(self):
         return f'Category {self.name}'
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'description': self.description,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'update_at': self.update_at.isoformat() if self.update_at else None
+            }
