@@ -13,18 +13,12 @@ from flask import request
 load_dotenv()
 
 app = Flask(__name__)
-
-
 # 2. Configuración de la base de datos
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-# 3. Inicializar SQLAlchemy
-db = SQLAlchemy(app)
-
-
-
-
+from models import db, Category # Línea de importación
+db.init_app(app)               # Línea de inicialización (¡En una línea nueva!)
 migrate = Migrate(app, db)
 
 # Definir un modelo simple para probar (El "M" de MVC)
@@ -49,6 +43,7 @@ def index():
 
 class Category(db.Model):
     __tablename__ = 'categories' #Nombre de la tabla en Neon
+    __table_args__ = {'extend_existing': True} 
 
     id = db.Column(db.Integer, primary_key=True) 
     name = db.Column(db.String(100), nullable=False) #nullable=False hace que sea un campo obligatorio
@@ -82,31 +77,25 @@ def to_dict(self):
             'update_at': self.update_at.isoformat() if self.update_at else None
             }
 
-@app.route('/api/categories', methods=['GET', 'POST']) # <--- Nota que ahora acepta AMBOS
+@app.route('/api/categories', methods=['GET', 'POST'])
 def handle_categories():
     from models import Category
     
+    # 1. Si es POST, creamos la categoría
     if request.method == 'POST':
         data = request.get_json()
         if not data or 'name' not in data:
             return jsonify({"error": "Falta el nombre"}), 400
         
-        new_category = Category(name=data['name'], description=data.get('description'))
-        db.session.add(new_category)
+        new_cat = Category(name=data['name'], description=data.get('description'))
+        db.session.add(new_cat)
         db.session.commit()
-        return jsonify(new_category.to_dict()), 201
+        return jsonify({"message": "Categoría creada", "name": new_cat.name}), 201
 
-    if request.method == 'GET':
-        categories = Category.query.all()
-        return jsonify([cat.to_dict() for cat in categories]), 200
-
-# Ruta separada para el ID individual
-@app.route('/api/categories/<int:id>', methods=['GET'])
-def get_category_by_id(id):
-    from models import Category
-    category = Category.query.get_or_404(id)
-    return jsonify(category.to_dict()), 200
-
+    # 2. Si es GET, consultamos y definimos la variable SIEMPRE
+    all_cats = Category.query.all() # Esto crea la variable que faltaba en image_dc47b9.png
+    return jsonify([cat.to_dict() for cat in all_cats]), 200
+    
 @app.route('/api/categories/<int:id>', methods=['DELETE'])
 def delete_category(id):
     from models import Category
@@ -119,7 +108,8 @@ def delete_category(id):
 
 
 
-
+if __name__ == '__main__':
+    app.run(debug=True)
 
 
 
